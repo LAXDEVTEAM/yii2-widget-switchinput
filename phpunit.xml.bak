@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    bootstrap="tests/bootstrap.php"
+    colors="true"
+    verbose="true"
+    failOnRisky="true"
+    failOnWarning="true"
+    stopOnFailure="false"
+    processIsolation="false"
+    backupGlobals="false"
+    backupStaticAttributes="false"
+    cacheResult="false">
+
+    <testsuites>
+        <testsuite name="SwitchInput Tests">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+
+    <filter>
+        <whitelist processUncoveredFilesFromWhitelist="true">
+            <directory suffix=".php">./</directory>
+            <exclude>
+                <directory>tests</directory>
+                <directory>vendor</directory>
+                <directory>assets</directory>
+            </exclude>
+        </whitelist>
+    </filter>
+
+    <logging>
+        <log type="coverage-html" target="tests/coverage"/>
+        <log type="coverage-clover" target="tests/coverage/clover.xml"/>
+        <log type="coverage-php" target="tests/coverage/coverage.php"/>
+        <log type="coverage-text" target="php://stdout" showUncoveredFiles="false"/>
+    </logging>
+
+    <php>
+        <env name="YII_DEBUG" value="1"/>
+        <env name="YII_ENV" value="test"/>
+    </php>
+</phpunit> 

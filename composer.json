@@ -16,6 +16,7 @@
   "homepage": "https://github.com/kartik-v/yii2-widget-switchinput",
   "type": "yii2-extension",
   "license": "BSD-3-Clause",
+
   "authors": [
     {
       "name": "Kartik Visweswaran",
@@ -26,10 +27,22 @@
   "require": {
     "kartik-v/yii2-krajee-base": "*"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^9.0"
+  },
   "minimum-stability": "stable",
   "autoload": {
     "psr-4": {
       "kartik\\switchinput\\": ""
     }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "kartik\\switchinput\\tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "test-coverage": "phpunit --coverage-html tests/coverage"
   }
 }

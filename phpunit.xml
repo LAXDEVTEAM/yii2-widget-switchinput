@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" bootstrap="tests/bootstrap.php" colors="true" verbose="true" failOnRisky="true" failOnWarning="true" stopOnFailure="false" processIsolation="false" backupGlobals="false" backupStaticAttributes="false" cacheResult="false" xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd">
+  <coverage processUncoveredFiles="true">
+    <include>
+      <directory suffix=".php">./</directory>
+    </include>
+    <exclude>
+      <directory>tests</directory>
+      <directory>vendor</directory>
+      <directory>assets</directory>
+    </exclude>
+    <report>
+      <clover outputFile="tests/coverage/clover.xml"/>
+      <html outputDirectory="tests/coverage"/>
+      <php outputFile="tests/coverage/coverage.php"/>
+      <text outputFile="php://stdout" showUncoveredFiles="false"/>
+    </report>
+  </coverage>
+  <testsuites>
+    <testsuite name="SwitchInput Tests">
+      <directory>tests</directory>
+    </testsuite>
+  </testsuites>
+  <logging/>
+  <php>
+    <env name="YII_DEBUG" value="1"/>
+    <env name="YII_ENV" value="test"/>
+  </php>
+</phpunit>
