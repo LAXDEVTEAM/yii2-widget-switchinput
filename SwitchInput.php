@@ -99,7 +99,7 @@ class SwitchInput extends InputWidget
     public function run()
     {
         parent::run();
-        if (empty($this->type) && $this->type !== self::CHECKBOX && $this->type !== self::RADIO) {
+        if ($this->type !== self::CHECKBOX && $this->type !== self::RADIO) {
             throw new InvalidConfigException("You must define a valid 'type' which must be either 1 (for checkbox) or 2 (for radio).");
         }
         if ($this->type == self::RADIO) {
@@ -123,7 +123,27 @@ class SwitchInput extends InputWidget
             if (empty($this->options['label'])) {
                 $this->options['label'] = null;
             }
-            $input = $this->getInput('checkbox');
+
+            // For tristate checkboxes, we need both a dummy checkbox for the switch UI 
+            // and a hidden input for proper form submission
+            if ($this->tristate) {
+                // Create a dummy checkbox for the bootstrap-switch plugin
+                $dummyOptions = $this->options;
+                $dummyOptions['id'] = $this->options['id'] . '_dummy';
+                unset($dummyOptions['name']); // Remove name so it doesn't get submitted
+                // Checkbox should be checked only when value is 1 (true), not when different from indeterminate
+                $isChecked = ($this->value == 1);
+                $dummyCheckbox = Html::checkbox('', $isChecked, $dummyOptions);
+
+                // Create hidden input for actual form submission
+                $inputName = $this->hasModel() ? Html::getInputName($this->model, $this->attribute) : $this->name;
+                $hiddenInput = Html::hiddenInput($inputName, $this->value, ['id' => $this->options['id']]);
+
+                $input = $hiddenInput . $dummyCheckbox;
+            } else {
+                $input = $this->getInput('checkbox');
+            }
+
             $output = ($this->inlineLabel) ? $input : Html::tag('div', $input);
             $output = $this->mergeIndToggle($output);
             return Html::tag('div', $output, $this->containerOptions) . "\n";
@@ -160,7 +180,9 @@ class SwitchInput extends InputWidget
             return $output;
         }
         $icon = ArrayHelper::remove($this->indeterminateToggle, 'label', '&times;');
-        $this->indeterminateToggle['data-kv-switch'] = ($this->type == self::CHECKBOX) ? $this->options['id'] : $this->name;
+        // For tristate checkboxes, the data-kv-switch should point to the original ID (hidden input)
+        $dataId = ($this->type == self::CHECKBOX) ? $this->options['id'] : $this->name;
+        $this->indeterminateToggle['data-kv-switch'] = $dataId;
         Html::addCssClass($this->indeterminateToggle, 'close kv-ind-toggle');
         $icon = Html::tag('span', $icon, $this->indeterminateToggle);
         $options = ArrayHelper::remove($this->indeterminateToggle, 'containerOptions', []);
@@ -183,14 +205,43 @@ class SwitchInput extends InputWidget
         $this->pluginOptions['indeterminate'] = $this->tristate && $this->value === $ind && $this->type !== self::RADIO;
         $this->pluginOptions['disabled'] = $this->disabled;
         $this->pluginOptions['readonly'] = $this->readonly;
-        $id = $this->type == self::RADIO ? 'jQuery("[name = \'' . $this->name . '\']")' :
-            'jQuery("#' . $this->options['id'] . '")';
-        $this->registerPlugin($this->pluginName, $id);
-        if (!$this->tristate || $this->indeterminateToggle === false || $this->type == self::RADIO) {
-            return;
-        }
-        $tog = 'jQuery("[data-kv-switch=\'' . $this->options['id'] . '\']")';
-        $js = <<< JS
+
+        // For tristate checkboxes, register plugin on dummy checkbox
+        if ($this->tristate && $this->type == self::CHECKBOX) {
+            $dummyId = 'jQuery("#' . $this->options['id'] . '_dummy")';
+            $hiddenId = 'jQuery("#' . $this->options['id'] . '")';
+            $this->registerPlugin($this->pluginName, $dummyId);
+
+            if ($this->indeterminateToggle !== false) {
+                $tog = 'jQuery("[data-kv-switch=\'' . $this->options['id'] . '\']")';
+                $js = <<< JS
+{$tog}.on('click',function(){
+    var dummyEl={$dummyId}, hiddenEl={$hiddenId}, val;
+    dummyEl.{$this->pluginName}('toggleIndeterminate');
+    val = dummyEl.prop('indeterminate') ? '{$ind}' : (dummyEl.is(':checked') ? 1 : 0);
+    hiddenEl.val(val);
+});
+
+// Sync dummy checkbox with hidden input value on switch change
+{$dummyId}.on('switchChange.bootstrapSwitch', function(event, state) {
+    var hiddenEl={$hiddenId};
+    if (!{$dummyId}.prop('indeterminate')) {
+        hiddenEl.val(state ? 1 : 0);
+    }
+});
+JS;
+                $view->registerJs($js);
+            }
+        } else {
+            $id = $this->type == self::RADIO ? 'jQuery("[name = \'' . $this->name . '\']")' :
+                'jQuery("#' . $this->options['id'] . '")';
+            $this->registerPlugin($this->pluginName, $id);
+
+            if (!$this->tristate || $this->indeterminateToggle === false || $this->type == self::RADIO) {
+                return;
+            }
+            $tog = 'jQuery("[data-kv-switch=\'' . $this->options['id'] . '\']")';
+            $js = <<< JS
 {$tog}.on('click',function(){
     var el={$id}, val;
     el.{$this->pluginName}('toggleIndeterminate');
@@ -198,6 +249,7 @@ class SwitchInput extends InputWidget
     el.val(val);
 });
 JS;
-        $view->registerJs($js);
+            $view->registerJs($js);
+        }
     }
 }
