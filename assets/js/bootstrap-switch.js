@@ -1,3 +1,6 @@
+// This includes a fix for changing from indeterminate to unchecked from:
+// https://github.com/Bttstrp/bootstrap-switch/issues/541#issue-128375190
+
 /* ========================================================================
  * bootstrap-switch - v3.3.2
  * http://www.bootstrap-switch.org
@@ -50,6 +53,9 @@
           baseClass: this.$element.data("base-class"),
           wrapperClass: this.$element.data("wrapper-class")
         }, options);
+        if (this.options.indeterminate) {
+          this.options.state = undefined;
+        }
         this.prevOptions = {};
         this.$wrapper = $("<div>", {
           "class": (function(_this) {
