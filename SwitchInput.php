@@ -108,7 +108,7 @@ class SwitchInput extends InputWidget
             }
         }
         $this->registerAssets();
-        echo $this->renderInput();
+        return $this->renderInput();
     }
 
     /**
